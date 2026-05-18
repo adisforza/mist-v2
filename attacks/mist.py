@@ -782,8 +782,11 @@ def main(args):
         )
     vae.to(accelerator.device, dtype=weight_dtype)
     vae.requires_grad_(False)
-    vae.encoder.training = True
-    vae.encoder.gradient_checkpointing = True
+    # FIX: replaced legacy direct attribute assignment (vae.encoder.gradient_checkpointing = True)
+    # which broke on diffusers >= 0.20 because Encoder.forward() now calls
+    # self._gradient_checkpointing_func() which is only registered via enable_gradient_checkpointing().
+    # Using the proper ModelMixin API instead:
+    vae.enable_gradient_checkpointing()
 
     #print info about train_text_encoder
     
@@ -905,4 +908,3 @@ def main(args):
 if __name__ == "__main__":
     args = parse_args()
     main(args)
-
